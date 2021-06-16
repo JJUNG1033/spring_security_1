@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans
+   xmlns="http://www.springframework.org/schema/security"
+   xmlns:beans="http://www.springframework.org/schema/beans"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd
+      http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+   <http>
+<!--    	왜 위에는 되고 밑에는 안되는가?
+			userController 에서 user/addUser userForm 두개로 만들었는데 이 2개를 컨트롤 하기위해서는 스프링 시큐리티를 쓰고있는한
+			반드시 해당 url을 security-db-context 에서 인터셉트 url처리를 꼭해줘야하는데 이름을 지정해주게 되면 하나의 url처리만 된거기때문에 회원가입이
+			안되게 된다					 -->
+<!--     <intercept-url pattern="/user/**" access="permitAll" /> -->
+<!--      <intercept-url pattern="/user/userForm" access="permitAll" /> -->
+     
+      <intercept-url pattern="/login/loginForm" access="permitAll" />
+        <intercept-url pattern="/" access="permitAll" />
+        <intercept-url pattern="/user/**" access="permitAll" />
+        <intercept-url pattern="/admin/**" access="hasRole('ADMIN')" />
+      <intercept-url pattern="/**" access="hasAnyRole('USER, ADMIN')" />    
+      
+      <!-- 이건 디폴트! 기본 로그인 페이지 그래서 이걸 자기걸로 커스터마이징 하겠다는 것! -->
+      <!-- 로그인 페이지 커스텀 화 -->
+      <!-- <form-login/> -->
+        <form-login login-page="/login/loginForm"
+              default-target-url="/"
+              authentication-failure-url="/login/loginForm?error"
+              username-parameter="id"
+              password-parameter="pw" />
+
+        <logout logout-url="/logout" logout-success-url="/" /> 
+
+      <!-- 403 에러 처리 -->
+        <access-denied-handler error-page="/login/accessDenied"/>      
+   </http> 
+   
+   <beans:bean id="customNoOpPasswordEncoder" class="edu.bit.ex.security.CustomNoOpPasswordEncoder"/>
+   <beans:bean id="bcryptPasswordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder" />
+   
+   <!-- provider --> 
+   <authentication-manager>   
+     <authentication-provider>
+       <password-encoder ref="customNoOpPasswordEncoder"/> <!-- customNoOpPasswordEncoder는 암호화된 비번 그대로 bcryptPasswordEncoder는 암호화된 비번 복호화해서 -->
+       <!--       db에서 user를 가지고오겠다   -->
+<!--        데이타소스는 커넥션 풀을 생각하면 된다 ref은 주소가지고오는건데 루트 에 생성한 커넥션 풀을 통해서 받아라
+라는 의미이다  username이런것은 함수이름이다 그래서 똑같아야한다 username =? 이 물음표는 우리가 로그인을 할때 아이디를 받아온다  -->
+      
+       <!-- <jdbc-user-service 
+               data-source-ref="dataSource"
+               role-prefix=""
+               users-by-username-query="select ename, empno, 1 from emp where ename = ?"
+               authorities-by-username-query="select ename, case when job='MANAGER' then 'ROLE_ADMIN' else 'ROLE_USER' end from emp where ename = ?"
+           /> -->  
+       
+       
+       <jdbc-user-service 
+         data-source-ref="dataSource"
+         users-by-username-query="select ename, empno,1 from emp where ename = ?"
+         authorities-by-username-query="select ename, authority from authorities where ename= ?"
+         
+      />
+     </authentication-provider>           
+   </authentication-manager>
+
+</beans:beans>

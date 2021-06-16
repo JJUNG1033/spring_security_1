@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans
+	xmlns="http://www.springframework.org/schema/security"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<http auto-config="true" use-expressions="true">
+		<intercept-url pattern="/login/loginForm" access="permitAll" />
+        <intercept-url pattern="/" access="permitAll" />
+        <intercept-url pattern="/tx/**" access="permitAll" />
+        <intercept-url pattern="/admin/**" access="hasRole('ADMIN')" />
+        <intercept-url pattern="/**" access="hasAnyRole('USER, ADMIN')" />
+
+		
+<!-- 		로그인 페이지 커스텀 이곳의 이름이랑  view의 로그인폼의 이름이랑 같아야한다 맞춰보시길... -->
+<!-- 		인터페이스 : 외주=강제=표준 -->
+<!-- 		detailservice 에서 -->
+		
+		<form-login login-page="/login/loginForm"
+                    default-target-url="/"
+                    authentication-failure-url="/login/loginForm?error"
+                    username-parameter="id"
+                    password-parameter="pw" />
+                    
+		<!-- 로그아웃 -->
+		<logout logout-url="/logout" logout-success-url="/" /> 
+		
+		<!-- 403에러 처리 -->
+		<access-denied-handler error-page="/login/accessDenied"/>
+	</http>
+
+
+	<beans:bean id="customNoOpPasswordEncoder" class="edu.bit.ex.security.CustomNoOpPasswordEncoder"/>
+	<beans:bean id="bcryptPasswordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder" />
+	
+	<beans:bean id="memberDetailsService" class="edu.bit.ex.security.MemberDetailsService" />
+	<beans:bean id="empDetailsService" class="edu.bit.ex.security.EmpDetailsService" />
+	
+	<!-- provider --> 
+<!-- 	이해하든지 말든지 인터페이스를 기준으로해서 내부적으로 객체생성해서 돌리겠다 -->
+	<authentication-manager>
+		<authentication-provider user-service-ref="empDetailsService"> 
+<!-- 		<authentication-provider user-service-ref="memberDetailsService">  -->
+			<password-encoder ref="customNoOpPasswordEncoder"/> 			
+		</authentication-provider>
+	</authentication-manager>
+
+
+</beans:beans>
